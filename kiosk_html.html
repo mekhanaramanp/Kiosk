@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KIOSK – Saintgits Campus Food</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:wght@400;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ══ RESET & CURSOR ══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{cursor:none!important;scroll-behavior:smooth;}
+#cursor{position:fixed;top:0;left:0;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);font-size:26px;line-height:1;transition:transform .12s ease;user-select:none;}
+#cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,120,50,.35);transition:transform .3s ease,width .2s,height .2s,opacity .2s;}
+body:has(button:hover) #cursor-ring,body:has(input:hover) #cursor-ring{width:54px;height:54px;opacity:.7;}
+
+/* ══ VARIABLES ══ */
+:root{
+  --bg:#fff8f2;--bg2:#fff3e8;--card:#ffffff;
+  --orange:#ff6b35;--orange2:#ff9a5c;--red:#e84a5f;
+  --green:#27ae60;--yellow:#f5a623;--purple:#6c63ff;--blue:#3b82f6;
+  --text:#2d1b0e;--muted:#8b6a55;--border:#ffe4cc;
+  --shadow:0 4px 24px rgba(255,107,53,.11);--shadow2:0 8px 40px rgba(255,107,53,.18);
+  --radius:20px;--radius-sm:12px;--nav-bg:rgba(255,248,242,.93);--input-bg:#fff8f2;
+}
+body.dark{
+  --bg:#1a1008;--bg2:#241508;--card:#2a1a0d;
+  --orange:#ff7f4e;--orange2:#ffaa7a;--red:#ff5f72;--green:#2ecc71;--yellow:#f5c842;
+  --text:#f5e6d8;--muted:#c9a882;--border:#3d2510;
+  --shadow:0 4px 24px rgba(0,0,0,.4);--shadow2:0 8px 40px rgba(0,0,0,.55);
+  --nav-bg:rgba(26,16,8,.95);--input-bg:#1f1108;
+}
+body.dark .food-card-img.available{background:linear-gradient(135deg,#2a1a0d,#3d2510)!important;}
+body.dark .food-card-img.preparing{background:linear-gradient(135deg,#2a2000,#3d3000)!important;}
+body.dark .food-card-img.unavailable{background:linear-gradient(135deg,#1e1e1e,#2a2a2a)!important;}
+body.dark .delivery-time-note{background:linear-gradient(135deg,#2a2200,#3a3000)!important;border-color:#665500;color:#d4b84a;}
+body.dark .count-badge{background:rgba(26,16,8,.92)!important;}
+body.dark .login-card{background:rgba(42,26,13,.97)!important;}
+
+/* ── DARK: outlet text always white ── */
+body.dark .outlet-rb{color:#ff8fa0!important;}
+body.dark .outlet-ak{color:#a89eff!important;}
+body.dark .outlet-canteen{color:#4ddb80!important;}
+body.dark .outlet-sub-name.rb{color:#ff8fa0!important;}
+body.dark .outlet-sub-name.ak{color:#a89eff!important;}
+body.dark .outlet-sub-name.canteen{color:#4ddb80!important;}
+body.dark .cart-outlet-name{color:#f5e6d8!important;}
+body.dark .food-outlet{filter:brightness(1.5);}
+
+/* ══ BASE ══ */
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;cursor:none;transition:background .35s,color .35s;}
+::-webkit-scrollbar{width:7px;}::-webkit-scrollbar-track{background:var(--bg2);}::-webkit-scrollbar-thumb{background:var(--orange2);border-radius:10px;}
+
+/* ══ FLOATING BG ══ */
+.food-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.food-bg span{
+  position:absolute;
+  opacity:.07;
+  animation:floatBg 20s linear infinite;
+  transition:opacity .3s, transform .3s, text-shadow .3s;
+  cursor:none;
+}
+body.dark .food-bg span{
+  opacity:.28;
+  filter:drop-shadow(0 0 6px rgba(255,160,80,.35));
+}
+/* sparkle on hover (only visible when mouse is near) */
+body.dark .food-bg span.sparkle{
+  opacity:.95!important;
+  filter:drop-shadow(0 0 10px rgba(255,200,80,.9)) drop-shadow(0 0 22px rgba(255,140,60,.65))!important;
+  transform:scale(1.35) rotate(15deg)!important;
+  animation:floatBg 20s linear infinite, sparkleShine .6s ease-in-out infinite alternate!important;
+}
+@keyframes sparkleShine{
+  0%{filter:drop-shadow(0 0 8px rgba(255,200,80,.8)) drop-shadow(0 0 20px rgba(255,140,60,.6));}
+  100%{filter:drop-shadow(0 0 18px rgba(255,230,120,1)) drop-shadow(0 0 38px rgba(255,160,70,.85));}
+}
+@keyframes floatBg{0%{transform:translateY(110vh) rotate(0deg);}100%{transform:translateY(-12vh) rotate(360deg);}}
+
+/* ══ LOGIN ══ */
+#page-login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;position:relative;z-index:1;}
+.login-top{text-align:center;margin-bottom:2rem;animation:fadeUp .55s ease both;}
+.login-logo{font-family:'Pacifico',cursive;font-size:3rem;color:var(--orange);text-shadow:3px 4px 0 rgba(255,107,53,.2);}
+.login-logo span{color:var(--red);}
+.login-sub{color:var(--muted);font-size:.97rem;margin-top:.4rem;font-weight:500;}
+.login-card{background:rgba(255,255,255,.97);border:2px solid var(--border);border-radius:28px;padding:2.4rem 2.2rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(255,107,53,.14);animation:fadeUp .55s .1s ease both;}
+.login-card h2{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.4rem;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;}
+.login-card>p{font-size:.87rem;color:var(--muted);margin-bottom:1.6rem;line-height:1.5;}
+.login-field{margin-bottom:1.1rem;}
+.login-field label{display:block;font-weight:700;font-size:.8rem;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.4px;}
+.login-field input{width:100%;padding:.85rem 1.1rem;border:2.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.97rem;color:var(--text);background:var(--input-bg);outline:none;cursor:none;transition:border-color .2s,box-shadow .2s;}
+.login-field input:focus{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,107,53,.1);}
+.login-error{background:#fde8e8;border:1.5px solid var(--red);border-radius:var(--radius-sm);padding:.8rem 1rem;font-size:.9rem;font-weight:700;color:var(--red);display:none;margin-bottom:1rem;text-align:center;line-height:1.6;}
+.login-error.show{display:block;animation:shakeX .4s ease;}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.login-btn{background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;width:100%;font-family:'Nunito',sans-serif;font-weight:900;font-size:1.05rem;padding:.95rem;border-radius:var(--radius-sm);cursor:none;box-shadow:0 4px 18px rgba(255,107,53,.35);transition:all .25s;margin-top:.4rem;}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(255,107,53,.45);}
+.login-footer{font-size:.82rem;color:var(--muted);text-align:center;margin-top:1.1rem;}
+.login-footer strong{color:var(--orange);}
+.login-switch{font-size:.84rem;color:var(--muted);text-align:center;margin-top:.85rem;}
+.login-switch a{color:var(--orange);font-weight:800;text-decoration:none;cursor:none;}
+.login-switch a:hover{text-decoration:underline;}
+.signup-card{background:rgba(255,255,255,.97);border:2px solid var(--border);border-radius:28px;padding:2.4rem 2.2rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(255,107,53,.14);animation:fadeUp .55s .1s ease both;display:none;}
+.signup-card h2{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.4rem;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;}
+.signup-card>p{font-size:.87rem;color:var(--muted);margin-bottom:1.6rem;line-height:1.5;}
+.signup-success{background:#d4f5e9;border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:.85rem 1rem;font-size:.9rem;font-weight:700;color:var(--green);display:none;margin-bottom:1rem;text-align:center;line-height:1.6;}
+.signup-success.show{display:block;animation:fadeUp .4s ease;}
+body.dark .signup-card{background:rgba(42,26,13,.97)!important;}
+body.dark .signup-card h2{color:#f5e6d8;}
+body.dark .signup-card>p{color:#c9a882;}
+
+/* ══ MAIN APP ══ */
+#app{display:none;}
+#app.visible{display:block;}
+
+/* ══ NAV ══ */
+nav{position:sticky;top:0;z-index:1000;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:2px solid var(--border);padding:0 1.2rem;display:flex;align-items:center;justify-content:space-between;height:64px;gap:.5rem;transition:background .35s,border-color .35s;}
+.nav-logo{font-family:'Pacifico',cursive;font-size:1.75rem;color:var(--orange);text-shadow:2px 3px 0 rgba(255,107,53,.18);letter-spacing:1px;white-space:nowrap;}
+.nav-logo span{color:var(--red);}
+.nav-user{font-size:.78rem;color:var(--muted);font-weight:600;background:var(--bg2);border:1.5px solid var(--border);border-radius:50px;padding:.28rem .8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nav-right{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;}
+.nav-btn{background:none;border:none;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;color:var(--muted);padding:.42rem .95rem;border-radius:50px;cursor:none;transition:all .2s;white-space:nowrap;}
+.nav-btn:hover,.nav-btn.active{background:var(--orange);color:#fff;}
+.cart-btn{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;padding:.46rem 1.1rem;border-radius:50px;cursor:none;display:flex;align-items:center;gap:.38rem;box-shadow:0 4px 14px rgba(255,107,53,.35);transition:all .2s;white-space:nowrap;}
+.cart-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,53,.45);}
+.cart-count{background:#fff;color:var(--orange);border-radius:50%;width:19px;height:19px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;}
+.theme-toggle{background:var(--bg2);border:2px solid var(--border);border-radius:50px;width:52px;height:27px;position:relative;cursor:none;transition:background .3s,border-color .3s;flex-shrink:0;}
+.theme-toggle .knob{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:.8rem;box-shadow:0 2px 8px rgba(255,107,53,.4);transition:transform .35s cubic-bezier(.34,1.56,.64,1),background .3s;}
+body.dark .theme-toggle .knob{transform:translateX(25px);}
+body.dark .theme-toggle{background:#2a1a0d;border-color:#3d2510;}
+.logout-btn{background:none;border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-weight:700;font-size:.78rem;padding:.35rem .8rem;border-radius:50px;cursor:none;transition:all .2s;white-space:nowrap;}
+.logout-btn:hover{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* ══ PAGES ══ */
+.page{display:none;}.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ HERO ══ */
+.hero{position:relative;z-index:1;padding:3rem 2rem 2rem;text-align:center;}
+.hero-tag{display:inline-block;background:var(--bg2);border:2px solid var(--border);border-radius:50px;padding:.3rem 1rem;font-size:.8rem;color:var(--orange);font-weight:700;margin-bottom:.9rem;animation:fadeUp .5s ease both;}
+.hero h1{font-family:'Pacifico',cursive;font-size:clamp(1.9rem,5vw,3.6rem);line-height:1.18;color:var(--text);animation:fadeUp .5s .08s ease both;}
+.hero h1 .accent{color:var(--orange);}
+.hero p{margin-top:.75rem;color:var(--muted);font-size:.97rem;max-width:460px;margin-inline:auto;animation:fadeUp .5s .15s ease both;}
+.hero-emojis{font-size:2rem;margin-top:1.1rem;letter-spacing:.5rem;animation:fadeUp .5s .22s ease both;}
+
+/* OUTLET CHIPS */
+.outlets-row{display:flex;justify-content:center;gap:.7rem;flex-wrap:wrap;padding:0 2rem 1.2rem;position:relative;z-index:1;}
+.outlet-chip{background:var(--card);border:2.5px solid var(--border);border-radius:50px;padding:.52rem 1.25rem;font-family:'Nunito',sans-serif;font-weight:800;font-size:.92rem;cursor:none;transition:all .2s;display:flex;align-items:center;gap:.42rem;}
+.outlet-chip:hover,.outlet-chip.active{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:0 4px 14px rgba(255,107,53,.3);transform:translateY(-2px);}
+
+/* SEARCH */
+.search-wrap{max-width:460px;margin:0 auto 1.4rem;padding:0 2rem;position:relative;z-index:1;}
+.search-wrap input{width:100%;padding:.88rem 1.2rem .88rem 2.8rem;border:2.5px solid var(--border);border-radius:50px;background:var(--card);font-family:'DM Sans',sans-serif;font-size:.95rem;color:var(--text);outline:none;cursor:none;transition:border-color .2s,box-shadow .2s;}
+.search-wrap input:focus{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,107,53,.1);}
+.search-icon{position:absolute;left:3rem;top:50%;transform:translateY(-50%);font-size:1.05rem;pointer-events:none;}
+
+/* ══ CATEGORY SECTIONS ══ */
+.cat-section{position:relative;z-index:1;margin-bottom:2rem;}
+.cat-header{display:flex;align-items:center;gap:.65rem;padding:.4rem 2rem .9rem;border-left:5px solid var(--orange);margin-left:2rem;margin-right:2rem;}
+.cat-icon{font-size:1.7rem;}.cat-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.2rem;}
+.cat-count{font-size:.77rem;color:var(--muted);font-weight:600;background:var(--bg2);border:1.5px solid var(--border);border-radius:50px;padding:.14rem .58rem;}
+.food-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:1.1rem;padding:0 2rem;}
+
+/* FOOD CARD */
+.food-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .22s,box-shadow .22s;display:flex;flex-direction:column;}
+.food-card:hover{transform:translateY(-5px);box-shadow:var(--shadow2);}
+.food-card-img{height:112px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.food-card-img.available{background:linear-gradient(135deg,#fff7f0,#ffe4cc);}
+.food-card-img.preparing{background:linear-gradient(135deg,#fffbf0,#fff3cc);}
+.food-card-img.unavailable{background:linear-gradient(135deg,#f5f5f5,#e8e8e8);filter:grayscale(.45);}
+.status-badge{position:absolute;top:7px;right:7px;font-size:.64rem;font-weight:800;font-family:'Nunito',sans-serif;padding:.25rem .6rem;border-radius:50px;text-transform:uppercase;letter-spacing:.4px;}
+.status-badge.available{background:#d4f5e9;color:var(--green);}
+.status-badge.preparing{background:#fff3cd;color:#e67e22;}
+.status-badge.unavailable{background:#fde8e8;color:var(--red);}
+.count-badge{position:absolute;top:7px;left:7px;background:rgba(255,255,255,.92);font-size:.7rem;font-weight:800;font-family:'Nunito',sans-serif;padding:.22rem .55rem;border-radius:50px;color:var(--text);border:1.5px solid var(--border);}
+.count-badge.low{color:var(--red);border-color:var(--red);background:#fde8e8;}
+.food-card-body{padding:.85rem .95rem .95rem;flex:1;display:flex;flex-direction:column;}
+.food-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:.97rem;margin-bottom:.18rem;}
+.food-outlet{font-size:.72rem;font-weight:600;margin-bottom:.35rem;}
+.outlet-rb{color:var(--red);}.outlet-ak{color:var(--purple);}.outlet-canteen{color:var(--green);}
+.food-price{font-family:'Nunito',sans-serif;font-weight:900;color:var(--orange);font-size:1.05rem;margin-bottom:.32rem;}
+.food-eta{font-size:.74rem;color:var(--muted);background:var(--bg2);border-radius:7px;padding:.26rem .52rem;margin-bottom:.55rem;display:inline-flex;align-items:center;gap:.28rem;}
+.food-desc{font-size:.78rem;color:var(--muted);flex:1;margin-bottom:.65rem;line-height:1.4;}
+.add-btn{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:.84rem;padding:.55rem;border-radius:var(--radius-sm);cursor:none;width:100%;transition:all .2s;}
+.add-btn:hover{background:var(--red);transform:scale(1.02);}
+.add-btn:disabled{background:#ddd;color:#999;cursor:not-allowed;transform:none;}
+.qty-control{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:var(--radius-sm);overflow:hidden;}
+.qty-btn{background:var(--orange);color:#fff;border:none;width:34px;height:34px;font-size:1.15rem;font-weight:900;cursor:none;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.qty-btn:hover{background:var(--red);}
+.qty-num{font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;flex:1;text-align:center;}
+
+/* ══ ORDER PAGE ══ */
+.order-layout{display:grid;grid-template-columns:1fr 340px;gap:1.6rem;padding:1.8rem;max-width:1020px;margin:0 auto;position:relative;z-index:1;}
+@media(max-width:780px){.order-layout{grid-template-columns:1fr;}}
+.cart-items-wrap{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.3rem;box-shadow:var(--shadow);}
+.cart-item{display:flex;align-items:center;gap:.85rem;padding:.8rem 0;border-bottom:1.5px solid var(--border);}
+.cart-item:last-child{border-bottom:none;}
+.cart-item-emoji{font-size:1.9rem;}
+.cart-item-info{flex:1;}
+.cart-item-name{font-weight:800;font-family:'Nunito',sans-serif;font-size:.94rem;}
+.cart-item-price{color:var(--orange);font-weight:700;font-size:.83rem;}
+.cart-item-qty{display:flex;gap:.32rem;align-items:center;}
+.cqty-btn{background:var(--bg2);border:1.5px solid var(--border);border-radius:7px;width:27px;height:27px;font-size:.97rem;font-weight:900;cursor:none;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.cqty-btn:hover{background:var(--orange);color:#fff;border-color:var(--orange);}
+.cqty-num{font-weight:900;font-family:'Nunito',sans-serif;min-width:20px;text-align:center;}
+.order-form-wrap{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.3rem;box-shadow:var(--shadow);height:fit-content;}
+.form-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.1rem;margin-bottom:1rem;display:flex;gap:.42rem;align-items:center;}
+.form-group{margin-bottom:.85rem;}
+.form-group label{display:block;font-weight:700;font-size:.78rem;color:var(--muted);margin-bottom:.32rem;}
+.form-group input,.form-group select{width:100%;padding:.7rem .95rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);background:var(--input-bg);outline:none;cursor:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,53,.1);}
+.delivery-time-note{background:linear-gradient(135deg,#fff3cd,#fff8e1);border:1.5px solid var(--yellow);border-radius:var(--radius-sm);padding:.62rem .92rem;margin:1rem 0;font-size:.8rem;display:flex;gap:.42rem;align-items:center;font-weight:600;color:#7a5a00;}
+.order-summary{border-top:2px solid var(--border);margin-top:.95rem;padding-top:.95rem;}
+.summary-row{display:flex;justify-content:space-between;margin-bottom:.35rem;font-size:.86rem;}
+.summary-row.total{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.05rem;color:var(--orange);margin-top:.45rem;padding-top:.45rem;border-top:1.5px dashed var(--border);}
+.place-order-btn{background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;width:100%;font-family:'Nunito',sans-serif;font-weight:900;font-size:1.02rem;padding:.9rem;border-radius:var(--radius-sm);cursor:none;transition:all .22s;box-shadow:0 4px 18px rgba(255,107,53,.35);margin-top:.75rem;}
+.place-order-btn:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(255,107,53,.45);}
+.empty-cart{text-align:center;padding:2.4rem 1rem;color:var(--muted);}
+.empty-cart-emoji{font-size:3.2rem;display:block;margin-bottom:.75rem;}
+
+/* ══ HISTORY ══ */
+.history-wrap{padding:1.8rem;max-width:840px;margin:0 auto;position:relative;z-index:1;}
+.order-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem;box-shadow:var(--shadow);transition:transform .2s;}
+.order-card:hover{transform:translateY(-3px);}
+.order-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.65rem;}
+.order-id{font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;}
+.order-date{font-size:.75rem;color:var(--muted);margin-top:.13rem;}
+.order-status-badge{font-size:.7rem;font-weight:800;font-family:'Nunito',sans-serif;padding:.3rem .72rem;border-radius:50px;text-transform:uppercase;}
+.order-status-badge.delivered{background:#d4f5e9;color:var(--green);}
+.order-status-badge.preparing{background:#fff3cd;color:#e67e22;}
+.order-items-list{display:flex;flex-wrap:wrap;gap:.42rem;margin-bottom:.65rem;}
+.order-item-chip{background:var(--bg2);border:1.5px solid var(--border);border-radius:50px;padding:.25rem .72rem;font-size:.77rem;font-weight:600;}
+.order-footer{display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid var(--border);padding-top:.7rem;margin-top:.7rem;}
+.order-total{font-family:'Nunito',sans-serif;font-weight:900;color:var(--orange);}
+.order-delivery{font-size:.78rem;color:var(--muted);}
+
+/* PAGE HEADER */
+.page-header{padding:1.7rem 2rem .7rem;position:relative;z-index:1;}
+.page-header h2{font-family:'Pacifico',cursive;font-size:1.75rem;color:var(--orange);}
+.page-header p{color:var(--muted);margin-top:.28rem;font-size:.9rem;}
+
+/* ══ MODAL ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(45,27,14,.52);z-index:10000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal-box{background:var(--card);border-radius:28px;padding:2.3rem 2rem;text-align:center;max-width:390px;width:90%;box-shadow:0 20px 60px rgba(45,27,14,.28);transform:scale(.85);transition:transform .3s;}
+.modal-overlay.show .modal-box{transform:scale(1);}
+.modal-emoji{font-size:3.6rem;display:block;margin-bottom:.85rem;animation:bounce 1s infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.modal-title{font-family:'Pacifico',cursive;font-size:1.65rem;color:var(--orange);margin-bottom:.45rem;}
+.modal-msg{color:var(--muted);font-size:.9rem;line-height:1.65;margin-bottom:1.3rem;}
+.modal-close-btn{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;padding:.72rem 2rem;border-radius:50px;cursor:none;transition:all .2s;}
+.modal-close-btn:hover{background:var(--red);transform:scale(1.04);}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:1.8rem;right:1.8rem;z-index:9999;background:var(--text);color:#fff;border-radius:14px;padding:.82rem 1.25rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;box-shadow:0 8px 28px rgba(45,27,14,.25);display:flex;align-items:center;gap:.52rem;transform:translateY(100px);opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+.no-results{grid-column:1/-1;text-align:center;padding:2.4rem;color:var(--muted);}
+.no-results span{display:block;font-size:2.6rem;margin-bottom:.65rem;}
+.cat-section:last-child{margin-bottom:3rem;}
+
+/* ══ OUTLET GROUPS IN CART & HISTORY ══ */
+.cart-outlet-group{border:2px solid var(--border);border-radius:var(--radius-sm);margin-bottom:1rem;overflow:hidden;}
+.cart-outlet-group:last-child{margin-bottom:0;}
+.cart-outlet-header{display:flex;align-items:center;justify-content:space-between;padding:.55rem .95rem;background:var(--bg2);border-bottom:1.5px solid var(--border);}
+.cart-outlet-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:.88rem;display:flex;align-items:center;gap:.38rem;}
+.cart-outlet-eta{font-size:.74rem;color:var(--muted);font-weight:600;background:var(--card);border:1.5px solid var(--border);border-radius:50px;padding:.18rem .6rem;}
+.cart-outlet-items{padding:.2rem .5rem;}
+.outlet-sub-box{border:2px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.75rem;overflow:hidden;}
+.outlet-sub-box:last-child{margin-bottom:0;}
+.outlet-sub-header{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;border-bottom:1.5px solid var(--border);}
+.outlet-sub-header.rb{background:rgba(232,74,95,.08);border-color:rgba(232,74,95,.25);}
+.outlet-sub-header.ak{background:rgba(108,99,255,.08);border-color:rgba(108,99,255,.25);}
+.outlet-sub-header.canteen{background:rgba(39,174,96,.08);border-color:rgba(39,174,96,.25);}
+.outlet-sub-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:.84rem;}
+.outlet-sub-name.rb{color:var(--red);}.outlet-sub-name.ak{color:var(--purple);}.outlet-sub-name.canteen{color:var(--green);}
+.outlet-sub-eta{font-size:.72rem;font-weight:700;padding:.18rem .58rem;border-radius:50px;background:var(--bg2);border:1.5px solid var(--border);color:var(--muted);}
+.outlet-sub-items{display:flex;flex-wrap:wrap;gap:.38rem;padding:.65rem .9rem;}
+
+/* ══ PAYMENT OPTIONS ══ */
+.payment-options{display:flex;gap:.65rem;margin-top:.3rem;}
+.payment-opt{flex:1;border:2.5px solid var(--border);border-radius:var(--radius-sm);padding:.65rem .7rem;cursor:none;background:var(--input-bg);font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--muted);text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:.22rem;}
+.payment-opt:hover{border-color:var(--orange);color:var(--orange);}
+.payment-opt.selected{border-color:var(--orange);background:rgba(255,107,53,.09);color:var(--orange);}
+.payment-opt .pay-icon{font-size:1.4rem;}
+.payment-opt .pay-label{font-size:.78rem;}
+.payment-opt .pay-note{font-size:.68rem;color:var(--muted);font-weight:600;}
+.payment-opt.selected .pay-note{color:var(--orange);}
+
+/* ══ ROLE SELECTOR ══ */
+.role-selector{display:flex;align-items:center;background:var(--bg2);border:2px solid var(--border);border-radius:50px;padding:.25rem;margin-bottom:1.4rem;gap:0;}
+.role-btn{flex:1;border:none;border-radius:50px;padding:.52rem .5rem;cursor:none;background:transparent;font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;color:var(--muted);text-align:center;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:.38rem;}
+.role-btn:hover{color:var(--orange);}
+.role-btn.active{background:var(--orange);color:#fff;box-shadow:0 2px 10px rgba(255,107,53,.3);}
+.role-btn .role-icon{font-size:1rem;}
+.role-btn .role-label{font-size:.86rem;}
+
+/* ══ ADMIN APP ══ */
+#admin-app{display:none;}
+#admin-app.visible{display:block;}
+.admin-nav{position:sticky;top:0;z-index:1000;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:2px solid var(--border);padding:0 1.2rem;display:flex;align-items:center;justify-content:space-between;height:64px;gap:.5rem;}
+.admin-badge{background:var(--red);color:#fff;font-family:'Nunito',sans-serif;font-weight:900;font-size:.7rem;padding:.2rem .55rem;border-radius:50px;margin-left:.4rem;text-transform:uppercase;letter-spacing:.5px;}
+.admin-wrap{padding:1.8rem;max-width:900px;margin:0 auto;position:relative;z-index:1;}
+.admin-section-title{font-family:'Pacifico',cursive;font-size:1.6rem;color:var(--orange);margin-bottom:.4rem;}
+.admin-section-sub{color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;}
+
+/* ADD ITEM FORM */
+.add-item-form{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.6rem;box-shadow:var(--shadow);}
+.add-item-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+@media(max-width:600px){.add-item-grid{grid-template-columns:1fr;}}
+.add-item-form .form-group{margin-bottom:0;}
+.add-item-form .form-group.full{grid-column:1/-1;}
+.admin-submit-btn{background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;padding:.88rem;border-radius:var(--radius-sm);cursor:none;width:100%;margin-top:1.1rem;box-shadow:0 4px 18px rgba(255,107,53,.3);transition:all .22s;}
+.admin-submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(255,107,53,.42);}
+
+/* ── DARK: food card name & general text boost ── */
+body.dark .food-name{color:#f5e6d8;}
+body.dark .cat-name{color:#f5e6d8;}
+body.dark .nav-btn{color:#c9a882;}
+body.dark .outlet-chip{color:#c9a882;}
+body.dark .outlet-chip:hover,.outlet-chip.active{color:#fff;}
+body.dark .order-id,.dark .order-date{color:#f5e6d8;}
+body.dark .status-badge.available{background:rgba(39,174,96,.22);color:#4ddb80;}
+body.dark .status-badge.preparing{background:rgba(230,126,34,.18);color:#f5a623;}
+body.dark .status-badge.unavailable{background:rgba(255,95,114,.16);color:#ff8fa0;}
+body.dark .count-badge{color:#f5e6d8;border-color:#4d3020;}
+body.dark .count-badge.low{color:#ff8fa0;border-color:#ff5f72;background:rgba(255,95,114,.15);}
+body.dark .food-desc{color:#c9a882;}
+body.dark .food-eta{color:#c9a882;background:#2a1a0d;}
+body.dark .login-card h2{color:#f5e6d8;}
+body.dark .login-card>p{color:#c9a882;}
+body.dark .login-field label{color:#c9a882;}
+body.dark .login-field input{color:#f5e6d8;}
+body.dark .login-footer{color:#c9a882;}
+body.dark .modal-msg{color:#c9a882;}
+body.dark .cart-item-name{color:#f5e6d8;}
+body.dark .form-title{color:#f5e6d8;}
+body.dark .order-item-chip{color:#c9a882;}
+body.dark .page-header h2{color:var(--orange);}
+body.dark .page-header p{color:#c9a882;}
+body.dark .admin-section-sub{color:#c9a882;}
+body.dark .cat-count{color:#c9a882;}
+body.dark .summary-row{color:#c9a882;}
+body.dark .order-delivery{color:#c9a882;}
+body.dark .form-group label{color:#c9a882;}
+body.dark .form-group input,.dark .form-group select{color:#f5e6d8;}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div id="cursor">🍕</div>
+<div id="cursor-ring"></div>
+<!-- FLOATING BG -->
+<div class="food-bg" id="foodBg"></div>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="page-login">
+  <div class="login-top">
+    <div class="login-logo">KIOSK<span>.</span></div>
+    <div class="login-sub">🎓 Saintgits Campus Food Ordering System</div>
+  </div>
+  <div class="login-card">
+    <h2>👋 Welcome Back!</h2>
+    <p>Sign in with your Saintgits college email to browse menus and place orders from your classroom.</p>
+
+    <div class="login-field">
+      <label>Email Address</label>
+      <input type="email" id="loginEmail" placeholder="yourname@saintgits.org">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter your password">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" onclick="doLogin()">🚀 Sign In &amp; Order Food</button>
+    <div class="login-footer">Only <strong>@saintgits.org</strong> accounts are permitted.</div>
+    <div class="login-switch">New here? <a href="#" onclick="showSignup();return false;">Create an account →</a></div>
+  </div>
+
+  <!-- ══ SIGN UP CARD ══ -->
+  <div class="signup-card" id="signupCard">
+    <h2>🎓 Create Account</h2>
+    <p>Register with your Saintgits email. Only <strong>@saintgits.org</strong> addresses are accepted.</p>
+    <div class="login-field">
+      <label>Full Name</label>
+      <input type="text" id="signupName" placeholder="e.g. Arjun Menon">
+    </div>
+    <div class="login-field">
+      <label>Email Address</label>
+      <input type="email" id="signupEmail" placeholder="yourname@saintgits.org">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="signupPass" placeholder="Min. 6 characters">
+    </div>
+    <div class="login-field">
+      <label>Confirm Password</label>
+      <input type="password" id="signupPassConfirm" placeholder="Re-enter password">
+    </div>
+    <div class="login-error" id="signupError"></div>
+    <div class="signup-success" id="signupSuccess">✅ Account created! You can now sign in.</div>
+    <button class="login-btn" onclick="doSignup()">✨ Create Account</button>
+    <div class="login-switch">Already have an account? <a href="#" onclick="showLogin();return false;">← Sign in</a></div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN APP ══════════ -->
+<div id="app">
+  <nav>
+    <div class="nav-logo">KIOSK<span>.</span></div>
+    <div class="nav-right">
+      <span class="nav-user" id="navUser">👤</span>
+      <button class="nav-btn active" onclick="showPage('home')">🏠 Menu</button>
+      <button class="nav-btn" onclick="showPage('cart')">🛒 Order</button>
+      <button class="nav-btn" onclick="showPage('history')">📋 History</button>
+      <button class="cart-btn" onclick="showPage('cart')">🛒 <span class="cart-count" id="cartCount">0</span></button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span class="knob" id="themeKnob">☀️</span></button>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="hero">
+      <div class="hero-tag">🎓 Saintgits Campus • Order from Class</div>
+      <h1>Skip the queue,<br>savour every <span class="accent">bite!</span></h1>
+      <p>Order from RB Kiosk, AK Kiosk &amp; Canteen right from your classroom.</p>
+      <div class="hero-emojis">🥐 🥪 🧆 ☕ 🍦 🧃</div>
+    </div>
+    <div class="outlets-row">
+      <button class="outlet-chip active" onclick="filterOutlet('all',this)">🏬 All Outlets</button>
+      <button class="outlet-chip" onclick="filterOutlet('RB Kiosk',this)">🔴 RB Kiosk</button>
+      <button class="outlet-chip" onclick="filterOutlet('AK Kiosk',this)">🟣 AK Kiosk</button>
+      <button class="outlet-chip" onclick="filterOutlet('Canteen',this)">🟢 Canteen</button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search snacks, drinks, ice cream…" oninput="renderMenu()">
+    </div>
+    <div id="menuContainer"></div>
+  </div>
+
+  <!-- CART -->
+  <div class="page" id="page-cart">
+    <div class="page-header"><h2>🛒 Your Order</h2><p>Review items and place your delivery order</p></div>
+    <div class="order-layout">
+      <div class="cart-items-wrap" id="cartItemsWrap"></div>
+      <div class="order-form-wrap">
+        <div class="form-title">📍 Delivery Details</div>
+        <div class="form-group"><label>Full Name</label><input type="text" id="studentName" placeholder="e.g. Priya Kumar"></div>
+        <div class="form-group"><label>Block / Building</label><input type="text" id="studentBlock" placeholder="e.g. Block A"></div>
+        <div class="form-group"><label>Classroom</label><input type="text" id="studentClass" placeholder="e.g. Room 204"></div>
+        <div class="form-group">
+          <label>Phone (optional)</label>
+          <input type="text" id="studentPhone" placeholder="e.g. 9876543210" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);const err=document.getElementById('phoneError');if(this.value.length>0&&this.value.length!==10){err.style.display='block';}else{err.style.display='none';}">
+          <div id="phoneError" style="display:none;color:var(--red);font-size:.78rem;font-weight:700;margin-top:.3rem;">⚠️ Invalid  number — must be exactly 10 digits.</div>
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <div class="payment-options">
+            <button type="button" class="payment-opt selected" id="payUPI" onclick="selectPayment('upi')">
+              <span class="pay-icon">📲</span>
+              <span class="pay-label">UPI</span>
+              <span class="pay-note">No extra charge</span>
+            </button>
+            <button type="button" class="payment-opt" id="payCOD" onclick="selectPayment('cod')">
+              <span class="pay-icon">💵</span>
+              <span class="pay-label">Cash on Delivery</span>
+              <span class="pay-note">+₹5 extra</span>
+            </button>
+          </div>
+        </div>
+        <div class="delivery-time-note">🕐 Estimated delivery: <strong id="deliveryTimeText">–</strong></div>
+        <div class="order-summary" id="orderSummary"></div>
+        <button class="place-order-btn" onclick="placeOrder()">Place Order 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="page" id="page-history">
+    <div class="page-header"><h2>📋 Order History</h2><p>All your past orders in one place</p></div>
+    <div class="history-wrap" id="historyWrap"></div>
+  </div>
+</div>
+
+<!-- ══════════ ADMIN APP ══════════ -->
+<div id="admin-app">
+  <nav class="admin-nav">
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <div class="nav-logo">KIOSK<span>.</span></div>
+      <span class="admin-badge">Admin</span>
+    </div>
+    <div class="nav-right">
+      <span class="nav-user" id="adminNavUser">🛠️</span>
+      <button class="nav-btn" onclick="showAdminPage('menu')" id="adminNavMenu">🍽️ Menu</button>
+      <button class="nav-btn active" onclick="showAdminPage('add-item')" id="adminNavAdd">➕ Add Item</button>
+      <button class="nav-btn" onclick="showAdminPage('update-stock')" id="adminNavUpdate">✏️ Update Stock</button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span class="knob" id="adminThemeKnob">☀️</span></button>
+      <button class="logout-btn" onclick="doAdminLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- ADD ITEM PAGE -->
+  <div class="page active" id="admin-page-add-item">
+    <div class="admin-wrap">
+      <div class="admin-section-title">➕ Add Menu Item</div>
+      <div class="admin-section-sub">Add a new item to any outlet. It will appear on the menu immediately.</div>
+      <div class="add-item-form">
+        <div class="add-item-grid">
+          <div class="form-group">
+            <label>Item Name</label>
+            <input type="text" id="ai-name" placeholder="e.g. Veg Puff">
+          </div>
+          <div class="form-group">
+            <label>Emoji</label>
+            <input type="text" id="ai-emoji" placeholder="e.g. 🥐" maxlength="4">
+          </div>
+          <div class="form-group">
+            <label>Outlet</label>
+            <select id="ai-outlet">
+              <option value="RB Kiosk">🔴 RB Kiosk</option>
+              <option value="AK Kiosk">🟣 AK Kiosk</option>
+              <option value="Canteen">🟢 Canteen</option>
+              <option value="RB & AK Kiosk">🔴🟣 RB & AK Kiosk</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="ai-category">
+              <option value="snacks">Snacks</option>
+              <option value="biscuits">Biscuits & Packs</option>
+              <option value="drinks">Hot Drinks</option>
+              <option value="colddrinks">Cold Drinks</option>
+              <option value="icecream">Ice Creams</option>
+              <option value="morning">Morning</option>
+              <option value="lunch">Lunch</option>
+              <option value="evening">Evening Snacks</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price (₹)</label>
+            <input type="number" id="ai-price" placeholder="e.g. 25" min="1">
+          </div>
+          <div class="form-group">
+            <label>Stock Count</label>
+            <input type="number" id="ai-count" placeholder="e.g. 20" min="0">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="ai-status">
+              <option value="available">✅ Available</option>
+              <option value="preparing">⏳ Preparing</option>
+              <option value="unavailable">❌ Unavailable</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ETA (optional)</label>
+            <input type="text" id="ai-eta" placeholder="e.g. ~15 min">
+          </div>
+          <div class="form-group full">
+            <label>Description</label>
+            <input type="text" id="ai-desc" placeholder="e.g. Crispy pastry with spiced filling">
+          </div>
+        </div>
+        <button class="admin-submit-btn" onclick="adminAddItem()">➕ Add to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPDATE STOCK PAGE -->
+  <div class="page" id="admin-page-update-stock">
+    <div class="admin-wrap">
+      <div class="admin-section-title">✏️ Update Stock & Price</div>
+      <div class="admin-section-sub">Select an outlet and item to update. Stock entered will be <strong>added</strong> to the current stock.</div>
+      <div class="add-item-form">
+        <div class="add-item-grid">
+          <div class="form-group">
+            <label>Outlet</label>
+            <select id="up-outlet" onchange="updateStockPopulateItems()">
+              <option value="">— Select Outlet —</option>
+              <option value="RB Kiosk">🔴 RB Kiosk</option>
+              <option value="AK Kiosk">🟣 AK Kiosk</option>
+              <option value="Canteen">🟢 Canteen</option>
+              <option value="RB & AK Kiosk">🔴🟣 RB & AK Kiosk</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Item Name</label>
+            <select id="up-item" onchange="updateStockShowCurrent()">
+              <option value="">— Select outlet first —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Current Stock</label>
+            <input type="text" id="up-current-stock" placeholder="—" disabled style="opacity:.6;">
+          </div>
+          <div class="form-group">
+            <label>Current Price (₹)</label>
+            <input type="text" id="up-current-price" placeholder="—" disabled style="opacity:.6;">
+          </div>
+          <div class="form-group">
+            <label>Add to Stock</label>
+            <input type="number" id="up-stock" placeholder="e.g. 10 (adds to current)" min="0">
+          </div>
+          <div class="form-group">
+            <label>New Price (₹) <span style="font-weight:400;font-size:.75rem;color:var(--muted)">(leave blank to keep)</span></label>
+            <input type="number" id="up-price" placeholder="e.g. 30" min="1">
+          </div>
+        </div>
+        <button class="admin-submit-btn" id="up-submit-btn" onclick="adminUpdateStock()">✏️ Update Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU PAGE -->
+  <div class="page" id="admin-page-menu">
+    <div class="admin-wrap" style="max-width:100%">
+      <div class="admin-section-title">🍽️ Full Menu</div>
+      <div class="admin-section-sub">Live view of all items across all outlets.</div>
+      <div class="outlets-row" style="padding:0 0 1.2rem;justify-content:flex-start;">
+        <button class="outlet-chip active" onclick="adminFilterOutlet('all',this)">🏬 All Outlets</button>
+        <button class="outlet-chip" onclick="adminFilterOutlet('RB Kiosk',this)">🔴 RB Kiosk</button>
+        <button class="outlet-chip" onclick="adminFilterOutlet('AK Kiosk',this)">🟣 AK Kiosk</button>
+        <button class="outlet-chip" onclick="adminFilterOutlet('Canteen',this)">🟢 Canteen</button>
+      </div>
+      <div class="search-wrap" style="max-width:400px;margin:0 0 1.4rem;padding:0;">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="adminSearchInput" placeholder="        Search menu…" oninput="renderAdminMenu()">
+      </div>
+      <div id="adminMenuContainer"></div>
+    </div>
+  </div>
+
+</div>
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <span class="modal-emoji">🎉</span>
+    <div class="modal-title">Order Placed!</div>
+    <div class="modal-msg" id="modalMsg"></div>
+    <button class="modal-close-btn" onclick="closeModal()">Awesome! 🍕</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── CURSOR ── */
+const foodEmojis=['🍕','🍔','🌮','🍜','🧆','🥤','🍛','🥪','🍩','🍦','☕','🥞'];
+let emojiIdx=0;
+const cursorEl=document.getElementById('cursor'),cursorRing=document.getElementById('cursor-ring');
+document.addEventListener('mousemove',e=>{
+  cursorEl.style.left=e.clientX+'px';cursorEl.style.top=e.clientY+'px';
+  cursorRing.style.left=e.clientX+'px';cursorRing.style.top=e.clientY+'px';
+
+  /* sparkle effect: check proximity to each floating bg element */
+  if(isDark){
+    document.querySelectorAll('.food-bg span').forEach(sp=>{
+      const r=sp.getBoundingClientRect();
+      const cx=r.left+r.width/2, cy=r.top+r.height/2;
+      const dist=Math.hypot(e.clientX-cx, e.clientY-cy);
+      if(dist<72){
+        sp.classList.add('sparkle');
+      } else {
+        sp.classList.remove('sparkle');
+      }
+    });
+  }
+});
+document.addEventListener('click',()=>{emojiIdx=(emojiIdx+1)%foodEmojis.length;cursorEl.textContent=foodEmojis[emojiIdx];});
+
+/* ── FLOATING BG ── */
+['🍕','🌮','🥗','🍔','☕','🧆','🍛','🥤','🍩','🍜','🥪','🍦','🧃','🍵'].forEach(e=>{
+  const s=document.createElement('span');s.textContent=e;
+  s.style.left=(Math.random()*96)+'%';
+  s.style.animationDelay=(Math.random()*20)+'s';
+  s.style.animationDuration=(13+Math.random()*15)+'s';
+  s.style.fontSize=(1.3+Math.random()*2)+'rem';
+  document.getElementById('foodBg').appendChild(s);
+});
+
+/* ── MENU DATA ── */
+let menuData = [];
+
+const CATS={
+  snacks:    {label:'Snacks',           icon:'🥐',color:'var(--orange)'},
+  biscuits:  {label:'Biscuits & Packs', icon:'🍪',color:'#a0522d'},
+  drinks:    {label:'Hot Drinks',       icon:'☕',color:'#7b5e44'},
+  colddrinks:{label:'Cold Drinks',      icon:'🥤',color:'var(--blue)'},
+  icecream:  {label:'Ice Creams',       icon:'🍦',color:'#d63aba'},
+  morning:   {label:'Morning',          icon:'🌅',color:'#e67e22'},
+  lunch:     {label:'Lunch',            icon:'🍛',color:'var(--green)'},
+  evening:   {label:'Evening Snacks',   icon:'🌆',color:'#8e44ad'},
+};
+const CAT_ORDER=['snacks','biscuits','drinks','colddrinks','icecream','morning','lunch','evening'];
+
+let cart={},orderHistory=[],activeOutlet='all',isDark=false,loggedInUser='',selectedPayment='upi';
+
+/* ── PAYMENT ── */
+function selectPayment(method){
+  selectedPayment=method;
+  document.getElementById('payUPI').classList.toggle('selected',method==='upi');
+  document.getElementById('payCOD').classList.toggle('selected',method==='cod');
+  renderCart();
+}
+
+const API_BASE = 'http://localhost:3000/api';
+function setToken(t){ localStorage.setItem('kiosk_token', t); }
+function getToken(){ return localStorage.getItem('kiosk_token'); }
+function clearToken(){ localStorage.removeItem('kiosk_token'); localStorage.removeItem('kiosk_role'); }
+function authHeaders(){ return { 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }; }
+
+/* ── MENU LOADER ── */
+async function loadMenuFromAPI(){
+  try {
+    const res  = await fetch(`${API_BASE}/menu`, { headers: authHeaders() });
+    if(!res.ok){ throw new Error('HTTP '+res.status); }
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(pe){ throw new Error('Bad JSON: '+text.substring(0,80)); }
+    if(data.success && Array.isArray(data.data)){
+      menuData.length = 0;
+      data.data.forEach(i => menuData.push({
+        id:       i.id,
+        name:     i.name,
+        outlet:   i.outlet,
+        category: i.category,
+        price:    i.price,
+        emoji:    i.emoji     || '🍽️',
+        status:   i.status,
+        count:    i.stock_count != null ? i.stock_count : (i.stock != null ? i.stock : 0),
+        desc:     i.description || '',
+        eta:      i.eta || null
+      }));
+      renderMenu();
+      renderAdminMenu();
+    } else {
+      showToast('⚠️ Could not load menu from server.');
+    }
+  } catch(e){
+    console.error('loadMenuFromAPI error:', e.message);
+    renderMenu();
+  }
+}
+
+/* ── LOGIN ── */
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const err   = document.getElementById('loginError');
+  err.classList.remove('show');
+
+  if(!email){ err.innerHTML='⚠️ Please enter your email address.'; err.classList.add('show'); return; }
+  if(!pass){  err.innerHTML='⚠️ Please enter your password.';      err.classList.add('show'); return; }
+
+  const btn = document.querySelector('.login-btn');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Signing in…';
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch(`${API_BASE}/auth/login`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+
+    if(!data.success){
+      err.innerHTML = '🔐 ' + (data.error || 'Invalid credentials');
+      err.classList.add('show');
+      return;
+    }
+
+    setToken(data.token);
+    localStorage.setItem('kiosk_role', data.user.role);
+
+    if(data.user.role === 'admin'){
+      document.getElementById('page-login').style.display = 'none';
+      document.getElementById('admin-app').classList.add('visible');
+      document.getElementById('adminNavUser').textContent = '🛠️ ' + data.user.name;
+      showAdminPage('add-item');
+      loadMenuFromAPI();
+    } else {
+      loggedInUser = email;
+      document.getElementById('navUser').textContent = '👤 ' + (data.user.name || email.split('@')[0]);
+      document.getElementById('page-login').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      loadMenuFromAPI();
+    }
+
+  } catch(e){
+    err.innerHTML = '❌ Cannot reach server. Is the backend running at <strong>'+API_BASE+'</strong>?';
+    err.classList.add('show');
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
+function doLogout(){
+  clearToken();
+  loggedInUser='';cart={};orderHistory=[];activeOutlet='all';
+  updateCartCount();
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('page-login').style.display='';
+  selectRole('eat');
+  showToast('👋 Logged out successfully!');
+}
+
+/* ── SIGN UP ── */
+function showSignup(){
+  document.querySelector('.login-card').style.display='none';
+  document.getElementById('signupCard').style.display='block';
+  document.getElementById('signupError').classList.remove('show');
+  document.getElementById('signupSuccess').classList.remove('show');
+  ['signupName','signupEmail','signupPass','signupPassConfirm'].forEach(id=>document.getElementById(id).value='');
+}
+function showLogin(){
+  document.getElementById('signupCard').style.display='none';
+  document.querySelector('.login-card').style.display='block';
+}
+async function doSignup(){
+  const name  = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('signupPass').value;
+  const pass2 = document.getElementById('signupPassConfirm').value;
+  const err   = document.getElementById('signupError');
+  const succ  = document.getElementById('signupSuccess');
+  err.classList.remove('show'); succ.classList.remove('show');
+
+  if(!name){ err.innerHTML='⚠️ Please enter your full name.'; err.classList.add('show'); return; }
+  if(!email.endsWith('@saintgits.org')){ err.innerHTML='⚠️ Only <strong>@saintgits.org</strong> email addresses are allowed.'; err.classList.add('show'); return; }
+  if(pass.length < 6){ err.innerHTML='⚠️ Password must be at least 6 characters.'; err.classList.add('show'); return; }
+  if(pass !== pass2){ err.innerHTML='⚠️ Passwords do not match.'; err.classList.add('show'); return; }
+
+  const btn = document.querySelector('#signupCard .login-btn');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Creating account…'; btn.disabled = true;
+
+  try {
+    const res  = await fetch(`${API_BASE}/auth/register`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ name, email, password: pass, role: 'user' })
+    });
+    const data = await res.json();
+
+    if(!data.success){
+      err.innerHTML = '❌ ' + (data.error || 'Registration failed. Try again.');
+      err.classList.add('show');
+      return;
+    }
+
+    succ.classList.add('show');
+    showToast('🎉 Account created! Please sign in.');
+    setTimeout(()=>{
+      document.getElementById('signupCard').style.display='none';
+      document.querySelector('.login-card').style.display='block';
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('loginPass').focus();
+    }, 1800);
+
+  } catch(e){
+    err.innerHTML = '❌ Cannot reach server. Is the backend running at <strong>'+API_BASE+'</strong>?';
+    err.classList.add('show');
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
+['signupName','signupEmail','signupPass','signupPassConfirm'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('keydown',e=>{ if(e.key==='Enter') doSignup(); });
+});
+['loginEmail','loginPass'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+});
+
+/* ── PAGES ── */
+function showPage(p){
+  document.querySelectorAll('#app .page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[{home:0,cart:1,history:2}[p]]?.classList.add('active');
+  if(p==='cart')renderCart();if(p==='history')renderHistory();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── FILTER ── */
+function filterOutlet(o,btn){
+  activeOutlet=o;
+  document.querySelectorAll('.outlet-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');renderMenu();
+}
+
+/* ── RENDER MENU ── */
+function renderMenu(){
+  const s=document.getElementById('searchInput')?.value.toLowerCase()||'';
+  const con=document.getElementById('menuContainer');if(!con)return;
+  let items=menuData.filter(i=>
+    (activeOutlet==='all'||i.outlet===activeOutlet)&&
+    (i.name.toLowerCase().includes(s)||i.outlet.toLowerCase().includes(s)||
+     i.desc.toLowerCase().includes(s)||i.category.toLowerCase().includes(s))
+  );
+  if(!items.length){con.innerHTML='<div class="no-results" style="padding:3rem 2rem"><span>🔍</span>Nothing found! Try a different search.</div>';return;}
+  const grouped={};CAT_ORDER.forEach(c=>{grouped[c]=[];});
+  items.forEach(i=>{if(grouped[i.category])grouped[i.category].push(i);});
+  con.innerHTML=CAT_ORDER.filter(c=>grouped[c].length).map(cat=>{
+    const cfg=CATS[cat],list=grouped[cat];
+    return`<div class="cat-section">
+      <div class="cat-header" style="border-left-color:${cfg.color}">
+        <span class="cat-icon">${cfg.icon}</span>
+        <span class="cat-name">${cfg.label}</span>
+        <span class="cat-count">${list.length} item${list.length>1?'s':''}</span>
+      </div>
+      <div class="food-grid">${list.map(renderCard).join('')}</div>
+    </div>`;
+  }).join('');
+}
+function renderCard(it){
+  const inCart=cart[it.id]||0,isLow=it.count>0&&it.count<=4;
+  const oc=it.outlet==='RB Kiosk'?'outlet-rb':it.outlet==='AK Kiosk'?'outlet-ak':'outlet-canteen';
+  const cntLbl=it.status==='available'?`${it.count} left`:'';
+  const btnHTML=it.status==='available'&&it.count>0
+    ?(inCart>0
+      ?`<div class="qty-control"><button class="qty-btn" onclick="changeQty(${it.id},-1)">−</button><span class="qty-num">${inCart}</span><button class="qty-btn" onclick="changeQty(${it.id},1)">+</button></div>`
+      :`<button class="add-btn" onclick="addToCart(${it.id})">+ Add to Cart</button>`)
+    :`<button class="add-btn" disabled>${it.status==='preparing'?`⏳ Ready ${it.eta}`:it.status==='unavailable'?`🕐 ${it.eta||'Unavailable'}`:'❌ Out of Stock'}</button>`;
+  return`<div class="food-card">
+    <div class="food-card-img ${it.status}">
+      <span style="font-size:3.4rem">${it.emoji}</span>
+      <span class="status-badge ${it.status}">${it.status==='available'?'✅ Ready':it.status==='preparing'?'⏳ Prep':'❌ N/A'}</span>
+      ${it.count>0?`<span class="count-badge ${isLow?'low':''}">${cntLbl}</span>`:''}
+    </div>
+    <div class="food-card-body">
+      <div class="food-name">${it.name}</div>
+      <div class="food-outlet ${oc}">📍 ${it.outlet}</div>
+      <div class="food-price">₹${it.price}</div>
+      ${it.eta?`<div class="food-eta">⏰ ${it.eta}</div>`:''}
+      <div class="food-desc">${it.desc}</div>
+      ${btnHTML}
+    </div>
+  </div>`;
+}
+
+/* ── CART ── */
+function addToCart(id){
+  const it=menuData.find(i=>i.id===id);if(!it||it.count<=0)return;
+  cart[id]=(cart[id]||0)+1;updateCartCount();renderMenu();showToast(`${it.emoji} ${it.name} added!`);
+}
+function changeQty(id,delta){
+  if(!cart[id])return;cart[id]+=delta;
+  if(cart[id]<=0)delete cart[id];updateCartCount();renderMenu();
+}
+function updateCartCount(){document.getElementById('cartCount').textContent=Object.values(cart).reduce((a,b)=>a+b,0);}
+function outletKey(outlet){return outlet==='RB Kiosk'?'rb':outlet==='AK Kiosk'?'ak':'canteen';}
+function outletETA(outlet){
+  const etaMap={'RB Kiosk':'~10–15 min','AK Kiosk':'~10–15 min','Canteen':'~20–30 min'};
+  return etaMap[outlet]||'~15 min';
+}
+function renderCart(){
+  const wrap=document.getElementById('cartItemsWrap'),keys=Object.keys(cart);
+  if(!keys.length){
+    wrap.innerHTML=`<div class="empty-cart"><span class="empty-cart-emoji">🛒</span><strong>Cart is empty!</strong><br><span style="font-size:.85rem;color:var(--muted)">Go grab some goodies 😋</span></div>`;
+    document.getElementById('orderSummary').innerHTML='';
+    document.getElementById('deliveryTimeText').textContent='–';return;
+  }
+  const groups={};
+  let sub=0;
+  keys.forEach(id=>{
+    const it=menuData.find(i=>i.id==id),qty=cart[id];
+    sub+=it.price*qty;
+    if(!groups[it.outlet])groups[it.outlet]=[];
+    groups[it.outlet].push({it,qty,id});
+  });
+  wrap.innerHTML=Object.entries(groups).map(([outlet,items])=>{
+    const ok=outletKey(outlet),eta=outletETA(outlet);
+    const itemsHTML=items.map(({it,qty,id})=>`
+      <div class="cart-item">
+        <span class="cart-item-emoji">${it.emoji}</span>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${it.name}</div>
+          <div class="cart-item-price">₹${it.price} × ${qty} = ₹${it.price*qty}</div>
+        </div>
+        <div class="cart-item-qty">
+          <button class="cqty-btn" onclick="cartQty(${id},-1)">−</button>
+          <span class="cqty-num">${qty}</span>
+          <button class="cqty-btn" onclick="cartQty(${id},1)">+</button>
+        </div>
+      </div>`).join('');
+    return`<div class="cart-outlet-group">
+      <div class="cart-outlet-header">
+        <span class="cart-outlet-name outlet-${ok}">📍 ${outlet}</span>
+        <span class="cart-outlet-eta">⏰ ${eta}</span>
+      </div>
+      <div class="cart-outlet-items">${itemsHTML}</div>
+    </div>`;
+  }).join('');
+  const eta=estimateDelivery();
+  document.getElementById('deliveryTimeText').textContent=eta;
+  const codFee=selectedPayment==='cod'?5:0;
+  document.getElementById('orderSummary').innerHTML=`
+    <div class="summary-row"><span>Subtotal</span><span>₹${sub}</span></div>
+    <div class="summary-row"><span>Delivery fee</span><span>₹5</span></div>
+    ${codFee?`<div class="summary-row"><span>💵 COD charge</span><span>₹${codFee}</span></div>`:''}
+    <div class="summary-row total"><span>Total</span><span>₹${sub+5+codFee}</span></div>`;
+}
+function cartQty(id,delta){
+  if(!cart[id])return;cart[id]+=delta;
+  if(cart[id]<=0)delete cart[id];
+  updateCartCount();renderCart();renderMenu();
+}
+function estimateDelivery(){
+  const now=new Date(),mins=10+Math.floor(Math.random()*10);
+  now.setMinutes(now.getMinutes()+mins);
+  return`~${mins} min (by ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')})`;
+}
+
+/* ── ORDER ── */
+async function placeOrder(){
+  const name=document.getElementById('studentName').value.trim();
+  const block=document.getElementById('studentBlock').value.trim();
+  const room=document.getElementById('studentClass').value.trim();
+  const phone=document.getElementById('studentPhone').value.trim();
+  if(!name||!block||!room){showToast('⚠️ Fill all delivery details!');return;}
+  if(phone&&phone.length!==10){showToast('⚠️ Invalid phone number — must be exactly 10 digits!');document.getElementById('phoneError').style.display='block';return;}
+  if(!Object.keys(cart).length){showToast('🛒 Cart is empty!');return;}
+
+  const btn=document.querySelector('.place-order-btn');
+  btn.textContent='⏳ Placing order…';btn.disabled=true;
+
+  const items=Object.keys(cart).map(id=>({menu_item_id:parseInt(id),qty:cart[id]}));
+
+  try {
+    const res=await fetch(`${API_BASE}/orders`,{
+      method:'POST',
+      headers:authHeaders(),
+      body:JSON.stringify({student_name:name,block,room,payment_method:selectedPayment,items})
+    });
+    const data=await res.json();
+
+    if(!data.success){
+      showToast('❌ '+(data.error||'Order failed. Try again.'));
+      btn.textContent='Place Order 🚀';btn.disabled=false;
+      return;
+    }
+
+    const {order_id,total,eta}=data.data;
+    Object.keys(cart).forEach(id=>{const it=menuData.find(i=>i.id==id);if(it)it.count=Math.max(0,it.count-cart[id]);});
+    const orderItems=Object.keys(cart).map(id=>{const it=menuData.find(i=>i.id==id);return{name:it.name,qty:cart[id],emoji:it.emoji,price:it.price,outlet:it.outlet};});
+    const outletGroupsMap={};
+    orderItems.forEach(i=>{
+      if(!outletGroupsMap[i.outlet])outletGroupsMap[i.outlet]={outlet:i.outlet,eta:outletETA(i.outlet),items:[]};
+      outletGroupsMap[i.outlet].items.push(i);
+    });
+    const outletGroups=Object.values(outletGroupsMap);
+    const order={id:order_id,date:new Date().toLocaleString(),items:orderItems,outletGroups,student:{name,block,room},total,eta,status:'preparing',payment:selectedPayment};
+    orderHistory.unshift(order);
+    setTimeout(()=>{
+      const o=orderHistory.find(x=>x.id===order_id);
+      if(o) o.status='delivered';
+      const badge=document.querySelector(`[data-orderid="${order_id}"]`);
+      if(badge){ badge.className='order-status-badge delivered'; badge.textContent='✅ Delivered'; }
+      else if(document.getElementById('page-history').classList.contains('active')){
+        renderHistory();
+      }
+    }, 30000);
+
+    document.getElementById('modalMsg').innerHTML=`Hi <strong>${name}</strong>! Delivering to <strong>${block}, ${room}</strong>.<br>ETA: <strong>${eta||'~15 min'}</strong><br>Payment: <strong>${selectedPayment==='upi'?'📲 UPI':'💵 Cash on Delivery'}</strong><br><br>Order ID: <strong>${order_id}</strong>`;
+    document.getElementById('modal').classList.add('show');
+    cart={};updateCartCount();loadMenuFromAPI();
+  } catch(e){
+    showToast('❌ Could not connect to server.');
+  } finally {
+    btn.textContent='Place Order 🚀';btn.disabled=false;
+  }
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('show');
+  showPage('history');
+}
+
+/* ── HISTORY ── */
+async function renderHistory(){
+  const wrap=document.getElementById('historyWrap');
+  wrap.innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted)">⏳ Loading your orders…</div>';
+  try {
+    const res=await fetch(`${API_BASE}/orders/my`,{headers:authHeaders()});
+    const data=await res.json();
+    if(data.success && data.data.length){
+      const dbIds=new Set(data.data.map(o=>o.id));
+      const localOnly=orderHistory.filter(o=>!dbIds.has(o.id));
+      const combined=[...localOnly,...data.data.map(o=>({
+        id:o.id,
+        date:new Date(o.placed_at).toLocaleString(),
+        student:{name:o.student_name,block:o.block,room:o.room},
+        items:o.items||[],
+        outletGroups:o.outlet_groups||[],
+        total:o.total,
+        eta:o.eta_text||'~15 min',
+        status:(new Date()-new Date(o.placed_at)>30000?'delivered':o.status),
+        payment:o.payment_method
+      }))];
+      orderHistory=combined;
+    }
+  } catch(e){ /* fall back to local */ }
+
+  if(!orderHistory.length){
+    wrap.innerHTML=`<div style="text-align:center;padding:4rem;color:var(--muted)"><span style="font-size:3rem">📋</span><br><br>No orders yet. Go grab some food! 😋</div>`;
+    return;
+  }
+  wrap.innerHTML=orderHistory.map(o=>{
+    let groups=o.outletGroups&&o.outletGroups.length?o.outletGroups:null;
+    if(!groups){
+      const gmap={};
+      (o.items||[]).forEach(i=>{
+        const outletName=i.outlet||i.item_outlet||'—';
+        if(!gmap[outletName])gmap[outletName]={outlet:outletName,eta:outletETA(outletName),items:[]};
+        gmap[outletName].items.push(i);
+      });
+      groups=Object.values(gmap);
+      if(!groups.length)groups=[{outlet:'—',eta:o.eta||'~15 min',items:o.items||[]}];
+    }
+    const outletBoxes=groups.map(g=>{
+      const ok=outletKey(g.outlet);
+      return`<div class="outlet-sub-box">
+        <div class="outlet-sub-header ${ok}">
+          <span class="outlet-sub-name ${ok}">📍 ${g.outlet}</span>
+          <span class="outlet-sub-eta">⏰ ${g.eta||g.eta_text||outletETA(g.outlet)}</span>
+        </div>
+        <div class="outlet-sub-items">${(g.items||[]).map(i=>`<span class="order-item-chip">${i.emoji||i.item_emoji||'🍽️'} ${i.name||i.item_name} ×${i.qty||i.item_qty||i.quantity||1}</span>`).join('')}</div>
+      </div>`;
+    }).join('');
+    return`<div class="order-card">
+      <div class="order-header">
+        <div>
+          <div class="order-id">🧾 ${o.id}</div>
+          <div class="order-date">📅 ${o.date}</div>
+          <div class="order-date">👤 ${o.student.name} · ${o.student.block}, ${o.student.room}</div>
+        </div>
+        <span class="order-status-badge ${o.status}" data-orderid="${o.id}">${o.status==='delivered'?'✅ Delivered':'⏳ Preparing'}</span>
+      </div>
+      ${outletBoxes}
+      <div class="order-footer">
+        <span class="order-total">₹${o.total} · ${o.payment==='upi'?'📲 UPI':'💵 COD'}</span>
+        <span class="order-delivery">${groups.length>1?`🏬 ${groups.length} outlets`:`🕐 ETA: ${o.eta}`}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── TOAST ── */
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2700);
+}
+
+/* ── THEME ── */
+function toggleTheme(){
+  isDark=!isDark;document.body.classList.toggle('dark',isDark);
+  const k1=document.getElementById('themeKnob'),k2=document.getElementById('adminThemeKnob');
+  if(k1)k1.textContent=isDark?'🌙':'☀️';
+  if(k2)k2.textContent=isDark?'🌙':'☀️';
+  /* clear sparkles when switching mode */
+  if(!isDark) document.querySelectorAll('.food-bg span').forEach(s=>s.classList.remove('sparkle'));
+  showToast(isDark?'🌙 Dark mode on!':'☀️ Light mode on!');
+}
+
+/* ── ROLE SELECTOR ── */
+let selectedRole='eat';
+function selectRole(r){
+  selectedRole=r;
+  document.getElementById('roleEat').classList.toggle('active',r==='eat');
+  document.getElementById('roleAdmin').classList.toggle('active',r==='admin');
+  const sub=document.querySelector('.login-card>p');
+  if(r==='admin'){
+    sub.textContent='Sign in with your admin credentials to manage menu items and view income.';
+    document.getElementById('loginEmail').placeholder='admin@saintgits.org';
+  } else {
+    sub.textContent='Sign in with your Saintgits college email to browse menus and place orders from your classroom.';
+    document.getElementById('loginEmail').placeholder='yourname@saintgits.org';
+  }
+}
+
+/* ── ADMIN LOGIN / LOGOUT ── */
+function doAdminLogout(){
+  clearToken();
+  document.getElementById('admin-app').classList.remove('visible');
+  document.getElementById('page-login').style.display='';
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').classList.remove('show');
+  selectRole('eat');
+  showToast('👋 Admin logged out!');
+}
+
+/* ── ADMIN PAGES ── */
+async function showAdminPage(p){
+  document.querySelectorAll('#admin-app .page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('admin-page-'+p).classList.add('active');
+  document.getElementById('adminNavAdd').classList.toggle('active',p==='add-item');
+  document.getElementById('adminNavMenu').classList.toggle('active',p==='menu');
+  document.getElementById('adminNavUpdate').classList.toggle('active',p==='update-stock');
+  if(p==='menu'){
+    const con=document.getElementById('adminMenuContainer');
+    if(con) con.innerHTML='<div style="padding:2rem;color:var(--muted)">⏳ Loading menu…</div>';
+    await loadMenuFromAPI();
+    renderAdminMenu();
+  }
+  if(p==='update-stock'){
+    await loadMenuFromAPI();
+    updateStockPopulateItems();
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── ADMIN MENU VIEW ── */
+let adminActiveOutlet='all';
+function adminFilterOutlet(o,btn){
+  adminActiveOutlet=o;
+  document.querySelectorAll('#admin-page-menu .outlet-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderAdminMenu();
+}
+function renderAdminMenu(){
+  const s=document.getElementById('adminSearchInput')?.value.toLowerCase()||'';
+  const con=document.getElementById('adminMenuContainer');if(!con)return;
+  let items=menuData.filter(i=>
+    (adminActiveOutlet==='all'||i.outlet===adminActiveOutlet)&&
+    (i.name.toLowerCase().includes(s)||i.outlet.toLowerCase().includes(s)||
+     i.desc.toLowerCase().includes(s)||i.category.toLowerCase().includes(s))
+  );
+  if(!items.length){con.innerHTML='<div class="no-results" style="padding:3rem 2rem"><span>🔍</span>Nothing found!</div>';return;}
+  const grouped={};CAT_ORDER.forEach(c=>{grouped[c]=[];});
+  items.forEach(i=>{if(grouped[i.category])grouped[i.category].push(i);});
+  con.innerHTML=CAT_ORDER.filter(c=>grouped[c].length).map(cat=>{
+    const cfg=CATS[cat],list=grouped[cat];
+    return`<div class="cat-section">
+      <div class="cat-header" style="border-left-color:${cfg.color}">
+        <span class="cat-icon">${cfg.icon}</span>
+        <span class="cat-name">${cfg.label}</span>
+        <span class="cat-count">${list.length} item${list.length>1?'s':''}</span>
+      </div>
+      <div class="food-grid">${list.map(it=>{
+        const oc=it.outlet==='RB Kiosk'?'outlet-rb':it.outlet==='AK Kiosk'?'outlet-ak':'outlet-canteen';
+        const isLow=it.count>0&&it.count<=4;
+        const cntLbl=it.status==='available'?`${it.count} left`:'';
+        return`<div class="food-card">
+          <div class="food-card-img ${it.status}">
+            <span style="font-size:3.4rem">${it.emoji}</span>
+            <span class="status-badge ${it.status}">${it.status==='available'?'✅ Ready':it.status==='preparing'?'⏳ Prep':'❌ N/A'}</span>
+            ${it.count>0?`<span class="count-badge ${isLow?'low':''}">${cntLbl}</span>`:''}
+          </div>
+          <div class="food-card-body">
+            <div class="food-name">${it.name}</div>
+            <div class="food-outlet ${oc}">📍 ${it.outlet}</div>
+            <div class="food-price">₹${it.price}</div>
+            ${it.eta?`<div class="food-eta">⏰ ${it.eta}</div>`:''}
+            <div class="food-desc">${it.desc}</div>
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── ADD ITEM ── */
+async function adminAddItem(){
+  const name=document.getElementById('ai-name').value.trim();
+  const emoji=document.getElementById('ai-emoji').value.trim()||'🍽️';
+  const outletName=document.getElementById('ai-outlet').value;
+  const category=document.getElementById('ai-category').value;
+  const price=parseInt(document.getElementById('ai-price').value);
+  const count=parseInt(document.getElementById('ai-count').value)||0;
+  const status=document.getElementById('ai-status').value;
+  const eta=document.getElementById('ai-eta').value.trim()||null;
+  const desc=document.getElementById('ai-desc').value.trim()||'Fresh item from '+outletName;
+  if(!name||isNaN(price)||price<1){showToast('⚠️ Fill in name and a valid price!');return;}
+
+  const outletIdMap={'RB Kiosk':1,'AK Kiosk':2,'Canteen':3};
+
+  const btn=document.querySelector('.admin-submit-btn');
+  btn.textContent='⏳ Saving…';btn.disabled=true;
+
+  // Determine which outlets to operate on
+  const targetOutlets = outletName === 'RB & AK Kiosk' ? ['RB Kiosk','AK Kiosk'] : [outletName];
+
+  try {
+    let anyError=false;
+    for(const targetOutlet of targetOutlets){
+      const outlet_id=outletIdMap[targetOutlet]||1;
+      // Check if item with same name and outlet already exists
+      const existing = menuData.find(i=>i.name.toLowerCase()===name.toLowerCase()&&i.outlet===targetOutlet);
+
+      let res, data;
+      if(existing){
+        // UPDATE existing item
+        res=await fetch(`${API_BASE}/menu/${existing.id}`,{
+          method:'PUT',
+          headers:authHeaders(),
+          body:JSON.stringify({name,outlet_id,category,price,emoji,status,stock_count:count,description:desc,eta})
+        });
+        data=await res.json();
+        if(!data.success){ showToast('❌ '+(data.error||`Failed to update item in ${targetOutlet}.`)); anyError=true; }
+      } else {
+        // ADD new item
+        res=await fetch(`${API_BASE}/menu`,{
+          method:'POST',
+          headers:authHeaders(),
+          body:JSON.stringify({name,outlet_id,category,price,emoji,status,stock_count:count,description:desc,eta})
+        });
+        data=await res.json();
+        if(!data.success){ showToast('❌ '+(data.error||`Failed to add item to ${targetOutlet}.`)); anyError=true; }
+      }
+    }
+    if(!anyError){
+      ['ai-name','ai-emoji','ai-price','ai-count','ai-eta','ai-desc'].forEach(id=>document.getElementById(id).value='');
+      const label = outletName==='RB & AK Kiosk' ? 'RB Kiosk & AK Kiosk' : outletName;
+      showToast(`✅ "${name}" saved to ${label}!`);
+      await loadMenuFromAPI();
+      renderAdminMenu();
+    }
+  } catch(e){
+    showToast('❌ Server unreachable.');
+  } finally {
+    btn.textContent='➕ Add to Menu';btn.disabled=false;
+  }
+}
+/* ── UPDATE STOCK ── */
+function updateStockPopulateItems(){
+  const outlet=document.getElementById('up-outlet').value;
+  const itemSel=document.getElementById('up-item');
+  itemSel.innerHTML='<option value="">— Select item —</option>';
+  document.getElementById('up-current-stock').value='';
+  document.getElementById('up-current-price').value='';
+  document.getElementById('up-stock').value='';
+  document.getElementById('up-price').value='';
+  if(!outlet) return;
+  const targetOutlets = outlet === 'RB & AK Kiosk' ? ['RB Kiosk','AK Kiosk'] : [outlet];
+  const items=menuData.filter(i=>targetOutlets.includes(i.outlet));
+  // De-duplicate by name when showing both kiosks
+  const seen=new Set();
+  items.forEach(i=>{
+    if(seen.has(i.name)) return;
+    seen.add(i.name);
+    const o=document.createElement('option');
+    o.value=i.id;
+    o.textContent=i.name;
+    itemSel.appendChild(o);
+  });
+}
+function updateStockShowCurrent(){
+  const id=parseInt(document.getElementById('up-item').value);
+  const item=menuData.find(i=>i.id===id);
+  document.getElementById('up-current-stock').value=item?item.count:'';
+  document.getElementById('up-current-price').value=item?('₹'+item.price):'';
+  document.getElementById('up-stock').value='';
+  document.getElementById('up-price').value='';
+}
+async function adminUpdateStock(){
+  const outlet=document.getElementById('up-outlet').value;
+  const itemId=parseInt(document.getElementById('up-item').value);
+  const addStock=parseInt(document.getElementById('up-stock').value)||0;
+  const newPriceVal=document.getElementById('up-price').value.trim();
+  if(!outlet||!itemId){showToast('⚠️ Select an outlet and item first!');return;}
+  const item=menuData.find(i=>i.id===itemId);
+  if(!item){showToast('⚠️ Item not found!');return;}
+  const newPrice=newPriceVal?parseInt(newPriceVal):item.price;
+  if(newPriceVal&&(isNaN(newPrice)||newPrice<1)){showToast('⚠️ Enter a valid price!');return;}
+
+  const outletIdMap={'RB Kiosk':1,'AK Kiosk':2,'Canteen':3};
+  const btn=document.getElementById('up-submit-btn');
+  btn.textContent='⏳ Updating…';btn.disabled=true;
+
+  // Determine which outlets to update
+  const targetOutlets = outlet === 'RB & AK Kiosk' ? ['RB Kiosk','AK Kiosk'] : [item.outlet];
+
+  try{
+    let anyError=false;
+    for(const targetOutlet of targetOutlets){
+      const outlet_id=outletIdMap[targetOutlet]||1;
+      // Find the matching item in each outlet (by name)
+      const targetItem = menuData.find(i=>i.name.toLowerCase()===item.name.toLowerCase()&&i.outlet===targetOutlet);
+      if(!targetItem){ showToast(`⚠️ "${item.name}" not found in ${targetOutlet}.`); anyError=true; continue; }
+      const newStock=targetItem.count+addStock;
+      const res=await fetch(`${API_BASE}/menu/${targetItem.id}`,{
+        method:'PUT',
+        headers:authHeaders(),
+        body:JSON.stringify({
+          name:targetItem.name,outlet_id,category:targetItem.category,
+          price:newPrice,emoji:targetItem.emoji,status:targetItem.status,
+          stock_count:newStock,description:targetItem.desc,eta:targetItem.eta
+        })
+      });
+      const data=await res.json();
+      if(!data.success){ showToast('❌ '+(data.error||`Update failed for ${targetOutlet}.`)); anyError=true; }
+    }
+    if(!anyError){
+      const label = outlet==='RB & AK Kiosk'?'RB Kiosk & AK Kiosk':item.outlet;
+      const newStock=item.count+addStock;
+      showToast(`✅ "${item.name}" updated in ${label}! Stock: ${item.count} + ${addStock} = ${newStock}${newPriceVal?' | Price: ₹'+newPrice:''}`);
+      await loadMenuFromAPI();
+      document.getElementById('up-outlet').value='';
+      document.getElementById('up-item').innerHTML='<option value="">— Select outlet first —</option>';
+      document.getElementById('up-current-stock').value='';
+      document.getElementById('up-current-price').value='';
+      document.getElementById('up-stock').value='';
+      document.getElementById('up-price').value='';
+    }
+  } catch(e){
+    showToast('❌ Server unreachable.');
+  } finally {
+    btn.textContent='✏️ Update Item';btn.disabled=false;
+  }
+}
+</script>
+</body>
+</html>

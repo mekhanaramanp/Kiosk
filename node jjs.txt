@@ -1,0 +1,17 @@
+cd "C:\xampp\htdocs\Food delivery"
+node server.js
+
+
+
+
+USE kiosk_db;
+SELECT * FROM menu_items ORDER BY id DESC LIMIT 5;
+
+
+
+
+
+
+http://localhost/Food%20delivery/kiosk_connected.html
+
+http://localhost/Food delivery/kiosk_connected.html
